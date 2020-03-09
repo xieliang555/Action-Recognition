@@ -1,0 +1,6 @@
+Res3D/save
+Res3D/log
+Res3D/__phcache__
+Res3D/.ipynb_checkpoints
+
+*.DS_Store
