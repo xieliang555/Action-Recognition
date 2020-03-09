@@ -1,6 +1,6 @@
 import torchvision
 import torch.nn as nn
-import torch.nn.functional a F
+import torch.nn.functional as F
 import copy
 import utils
 import time
@@ -52,27 +52,28 @@ def train(model, train_loader, criterion, optimizer, epoch, writer, device):
             break
 
 
-def evaluate(model, val_loader, writer, device, classes, test_mode=False):
+def evaluate(model, val_loader, criterion, device):
     model.eval()
+    epoch_loss = 0.0
     epoch_accuracy = 0.0
     for batch_idx, batch in enumerate(val_loader):
         start_time = time.time()
         inputs = batch[0].to(device)
         target = batch[2].to(device)
         outputs = model(inputs)
-        outputs = F.softmax(outputs, dim=1)
-        probs, predict = outputs.max(1)
+        
+        epoch_loss += criterion(outputs, target).item()
+        predict = outputs.max(1)[1]
         epoch_accuracy += predict.eq(target).sum().item() / len(target)
 
-        if test_mode:
-            # change input shape from [N, C, T, H, W] to [N, T, C, H, W]
-            inputs = inputs.permute(0,2,1,3,4).mean(0)
-            error_selected = target.nq(predict)
-            writer.add_video('video for wrong prediction from test dataset',
-                             inputs[error_selected],
-                             batch_idx)
+
+#         if test_mode:
+#             # change input shape from [N, C, T, H, W] to [N, T, C, H, W]
+#             inputs = inputs.permute(0,2,1,3,4).mean(0)
+#             error_selected = target.nq(predict)
+#             writer.add_video('video for wrong prediction from test dataset',
+#                              inputs[error_selected],
+#                              batch_idx)
             
-        if batch_idx == 25:
-            break
             
-    return epoch_accuracy / len(val_loader)
+    return epoch_loss / len(val_loader), epoch_accuracy / len(val_loader)
